@@ -1,0 +1,36 @@
+"""
+config.py — paths and connection settings.
+
+Copy this file to config.py and adjust as needed.
+Values are read from environment variables (set in .env / docker-compose.yml).
+"""
+import os
+
+# ── PostgreSQL ───────────────────────────────────────────────────────────
+PG_HOST     = os.environ.get("POSTGRES_HOST", "postgres")
+PG_PORT     = os.environ.get("POSTGRES_PORT", "5432")
+PG_USER     = os.environ.get("POSTGRES_USER", "admin")
+PG_PASSWORD = os.environ.get("POSTGRES_PASSWORD", "")
+PG_DB       = os.environ.get("POSTGRES_DB", "network_dashboard")
+
+PG_CONN = (
+    f"host={PG_HOST} port={PG_PORT} "
+    f"dbname={PG_DB} user={PG_USER} password={PG_PASSWORD}"
+)
+
+# ── OpenSearch ───────────────────────────────────────────────────────────
+OPENSEARCH_HOST     = os.environ.get("OPENSEARCH_HOST", "https://opensearch-node:9200")
+OPENSEARCH_USER     = os.environ.get("OPENSEARCH_USER", "admin")
+OPENSEARCH_PASSWORD = os.environ.get("OPENSEARCH_PASSWORD", "")
+
+OPENSEARCH_ALARMS_INDEX = os.environ.get("OPENSEARCH_ALARMS_INDEX", "alarms-active")
+INVENTORY_INDEX         = os.environ.get("INVENTORY_INDEX", "inventory-daily")
+
+# ── Local data paths (simulation) ───────────────────────────────────────
+DATA_DIR      = os.environ.get("DATA_DIR", "/app/data")
+METRICS_DIR   = os.path.join(DATA_DIR, "metrics")
+INVENTORY_DIR = os.path.join(DATA_DIR, "elasticsearch_data", "inventory")
+ALARMS_DIR    = os.path.join(DATA_DIR, "elasticsearch_data", "alarms")
+
+# ── Reports output ───────────────────────────────────────────────────────
+REPORTS_OUTPUT_DIR = os.environ.get("REPORTS_OUTPUT_DIR", "/app/reports/output")

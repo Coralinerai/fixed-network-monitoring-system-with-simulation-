@@ -30,12 +30,11 @@ def parse_component_from_ui_name(alarm_resource_ui_name: str) -> str | None:
     Extract component from alarmResourceUiName.
 
     Examples:
-        "component:LS_POINT_DENIS:Alarm-Input-Port-2"  -> "Alarm-Input-Port-2"
-        "lag:POL-LS-FX-1.IHUB:1"                       -> "1"
-        "exportingProcess:POL-LS-FX-1:AP-ipfix-..."    -> "AP-ipfix-..."
-        "license-key:Altiplano Core"                    -> None
-    """
-    if not alarm_resource_ui_name:
+      "component:DEV_DEMO01:Alarm-Input-Port-2"     -> "Alarm-Input-Port-2"
+       "lag:HOST-DEMO-1.IHUB:1"                        -> "1"
+      "exportingProcess:HOST-DEMO-1:AP-ipfix-..."    -> "AP-ipfix-..."
+     "license-key:Demo Core"                         -> None
+     if not alarm_resource_ui_name:
         return None
 
     parts = alarm_resource_ui_name.split(":")

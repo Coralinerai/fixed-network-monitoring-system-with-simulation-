@@ -1,0 +1,130 @@
+{
+  "title": "Hardware Resources",
+  "uid": "hardware-resources",
+  "tags": [
+    "network",
+    "hardware"
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "2026-04-06T00:00:00Z",
+    "to": "2026-04-13T23:59:59Z"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "query",
+        "datasource": "PostgreSQL",
+        "query": "SELECT device_name AS __text, device_name AS __value FROM inventory GROUP BY device_name ORDER BY device_name",
+        "refresh": 2,
+        "hide": 0,
+        "includeAll": true,
+        "allValue": null,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "CPU Usage % per Device",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT collected_at AS time, 100 - value AS \"CPU Usage %\", device_name AS metric FROM metrics WHERE category = 'HARDWARE' AND metric_name LIKE '%cpu-idle%' AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY collected_at;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "lineWidth": 2
+          },
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Free Memory per Device",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT collected_at AS time, value AS \"Free Memory\", device_name AS metric FROM metrics WHERE category = 'HARDWARE' AND metric_name LIKE '%free-memory%' AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY collected_at;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "deckbytes",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Used Memory per Device",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT collected_at AS time, value AS \"Used Memory\", device_name AS metric FROM metrics WHERE category = 'HARDWARE' AND metric_name LIKE '%used-mem%' AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY collected_at;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "deckbytes",
+          "custom": {
+            "lineWidth": 2
+          }
+        }
+      }
+    }
+  ]
+}

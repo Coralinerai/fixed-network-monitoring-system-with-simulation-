@@ -1,0 +1,157 @@
+{
+  "title": "Optical Health",
+  "uid": "optical-health",
+  "tags": [
+    "network",
+    "optical"
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "2026-04-06T00:00:00Z",
+    "to": "2026-04-13T23:59:59Z"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "query",
+        "datasource": "PostgreSQL",
+        "query": "SELECT device_name AS __text, device_name AS __value FROM inventory GROUP BY device_name ORDER BY device_name",
+        "refresh": 2,
+        "hide": 0,
+        "includeAll": true,
+        "allValue": null,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "PON Port Status \u2014 Current State",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT device_name AS \"Device\", component AS \"PON Port\", ROUND(value::numeric, 1) AS \"RX Power (dBm)\", CASE WHEN value = -40 THEN 'NO SIGNAL' WHEN value < -27 THEN 'WEAK' WHEN value BETWEEN -27 AND -8 THEN 'GOOD' ELSE 'CHECK' END AS \"Status\" FROM metrics WHERE category = 'OPTICAL' AND metric_name LIKE '%rx-power%' AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) AND (device_name, component, collected_at) IN (SELECT device_name, component, MAX(collected_at) FROM metrics WHERE category = 'OPTICAL' AND metric_name LIKE '%rx-power%' AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) GROUP BY device_name, component) ORDER BY device_name, component;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "NO SIGNAL": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "WEAK": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "GOOD": {
+                        "color": "green"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "CHECK": {
+                        "color": "yellow"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 2,
+      "title": "RX Power per PON Port (dBm)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 24,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT collected_at AS time, value AS \"RX Power (dBm)\", device_name || '/' || component AS metric FROM metrics WHERE category = 'OPTICAL' AND metric_name LIKE '%rx-power%' AND value > -40 AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY collected_at;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dBm",
+          "custom": {
+            "lineWidth": 1
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "TX Power per PON Port (dBm)",
+      "type": "timeseries",
+      "gridPos": {
+        "x": 0,
+        "y": 16,
+        "w": 12,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT collected_at AS time, value AS \"TX Power (dBm)\", device_name || '/' || component AS metric FROM metrics WHERE category = 'OPTICAL' AND metric_name LIKE '%tx-power%' AND value > -40 AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY collected_at;",
+          "format": "time_series"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "dBm",
+          "custom": {
+            "lineWidth": 1
+          }
+        }
+      }
+    }
+  ]
+}

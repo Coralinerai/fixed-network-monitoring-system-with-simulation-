@@ -1,0 +1,479 @@
+{
+  "title": "Network Overview",
+  "uid": "network-overview",
+  "tags": [
+    "network",
+    "overview"
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "2026-04-06T00:00:00Z",
+    "to": "2026-04-13T23:59:59Z"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "device",
+        "label": "Device",
+        "type": "query",
+        "datasource": "PostgreSQL",
+        "query": "SELECT device_name AS __text, device_name AS __value FROM inventory GROUP BY device_name ORDER BY device_name",
+        "refresh": 2,
+        "hide": 0,
+        "includeAll": true,
+        "allValue": null,
+        "multi": false,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Total Active Alarms",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS \"Total Alarms\" FROM active_alarms WHERE DATE(raised_at) <= (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Service Affecting Alarms",
+      "type": "stat",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 6,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) AS \"Service Affecting\" FROM active_alarms WHERE is_service_affecting = true AND DATE(raised_at) <= (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "orange",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 3
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Total ONUs Served",
+      "type": "stat",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 6,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT SUM(onu_count) AS \"Total ONUs\" FROM inventory WHERE collection_date = (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Dead PON Ports",
+      "type": "stat",
+      "gridPos": {
+        "x": 18,
+        "y": 0,
+        "w": 6,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(DISTINCT component) AS \"Dead Ports\" FROM metrics WHERE category = 'OPTICAL' AND metric_name LIKE '%rx-power%' AND value = -40 AND DATE(collected_at) = (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "yellow",
+                "value": 1
+              },
+              {
+                "color": "red",
+                "value": 5
+              }
+            ]
+          },
+          "color": {
+            "mode": "thresholds"
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Device Status",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 14,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT device_name AS \"Device\", CASE WHEN online_state THEN 'ONLINE' ELSE 'OFFLINE' END AS \"Status\", ip_address AS \"IP\", hardware_type AS \"Hardware\", software_version AS \"Software\", onu_count AS \"ONUs\" FROM inventory WHERE collection_date = (SELECT sim_date FROM simulation_state LIMIT 1) AND device_name IN (${device:sqlstring}) ORDER BY device_name;",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "dataLinks": [
+          {
+            "title": "Optical Health",
+            "url": "/d/optical-health/optical-health?var-device=${__data.fields.Device}",
+            "targetBlank": false
+          },
+          {
+            "title": "Hardware",
+            "url": "/d/hardware-resources/hardware-resources?var-device=${__data.fields.Device}",
+            "targetBlank": false
+          },
+          {
+            "title": "Traffic & Drops",
+            "url": "/d/traffic-drops/traffic-drops?var-device=${__data.fields.Device}",
+            "targetBlank": false
+          }
+        ]
+      },
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "ONLINE": {
+                        "color": "green"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "OFFLINE": {
+                        "color": "red"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 6,
+      "title": "Alarms by Severity",
+      "type": "piechart",
+      "gridPos": {
+        "x": 14,
+        "y": 3,
+        "w": 10,
+        "h": 8
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT COUNT(*) FILTER (WHERE severity = 'critical') AS \"Critical\", COUNT(*) FILTER (WHERE severity = 'major') AS \"Major\", COUNT(*) FILTER (WHERE severity = 'minor') AS \"Minor\" FROM active_alarms WHERE device_name IN (${device:sqlstring}) AND DATE(raised_at) <= (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "pieType": "pie",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "table",
+          "placement": "right"
+        },
+        "displayLabels": [
+          "name",
+          "value"
+        ]
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Critical"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Major"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "orange",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Minor"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "title": "Active Alarms",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 11,
+        "w": 24,
+        "h": 10
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT device_name AS \"Device\", alarm_type AS \"Alarm Type\", severity AS \"Severity\", is_service_affecting AS \"Service Affecting\", alarm_text AS \"Details\", raised_at AS \"Raised At\" FROM active_alarms WHERE device_name IN (${device:sqlstring}) AND DATE(raised_at) <= (SELECT sim_date FROM simulation_state LIMIT 1) ORDER BY is_service_affecting DESC, raised_at DESC;",
+          "format": "table"
+        }
+      ],
+      "fieldConfig": {
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Service Affecting"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "true": {
+                        "color": "red",
+                        "text": "YES"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "false": {
+                        "color": "green",
+                        "text": "NO"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "color-background"
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "type": "value",
+                    "options": {
+                      "critical": {
+                        "color": "red"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "major": {
+                        "color": "orange"
+                      }
+                    }
+                  },
+                  {
+                    "type": "value",
+                    "options": {
+                      "minor": {
+                        "color": "yellow"
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

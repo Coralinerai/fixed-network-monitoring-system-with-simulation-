@@ -1,0 +1,83 @@
+{
+  "title": "Daily Network Report",
+  "uid": "daily-report",
+  "tags": [
+    "network",
+    "report"
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "version": 1,
+  "time": {
+    "from": "2026-04-06T00:00:00Z",
+    "to": "2026-04-13T23:59:59Z"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Simulation Date",
+      "type": "stat",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 6,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT sim_date AS \"Current Day\" FROM simulation_state LIMIT 1;",
+          "format": "table"
+        }
+      ],
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Available Reports",
+      "type": "table",
+      "gridPos": {
+        "x": 6,
+        "y": 0,
+        "w": 18,
+        "h": 3
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT report_date AS \"Date\", generated_at AS \"Generated At\" FROM daily_reports ORDER BY report_date DESC;",
+          "format": "table"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Daily Network Report",
+      "type": "table",
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 20
+      },
+      "datasource": "PostgreSQL",
+      "targets": [
+        {
+          "rawSql": "SELECT report_text AS \"Report\" FROM daily_reports WHERE report_date = (SELECT sim_date FROM simulation_state LIMIT 1);",
+          "format": "table"
+        }
+      ]
+    }
+  ]
+}

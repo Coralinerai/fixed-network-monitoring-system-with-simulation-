@@ -1,0 +1,13 @@
+cat > .gitignore << 'EOF'
+.env
+data/
+__pycache__/
+*.pyc
+airflow/logs/
+postgres_data/
+reports/output/
+EOF
+
+git add .gitignore
+git commit -m "Add gitignore"
+git push
